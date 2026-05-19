@@ -197,51 +197,51 @@ export default function DashboardPage() {
           <div className="space-y-3">
             {polls.map((poll) => (
               <Card key={poll.id} className="hover:shadow-md transition-shadow">
-                <CardContent className="p-4">
-                  <div className="flex items-start justify-between gap-3">
-                    <div className="flex-1 min-w-0">
-                      <div className="flex flex-wrap items-center gap-2 mb-1.5">
-                        <Badge variant={poll.isClosed ? 'destructive' : 'success'}>
-                          {poll.isClosed ? (
-                            <><Lock className="h-3 w-3 mr-1" />Cerrada</>
-                          ) : (
-                            <><LockOpen className="h-3 w-3 mr-1" />Abierta</>
-                          )}
-                        </Badge>
-                        <Badge variant="secondary" className="flex items-center gap-1">
-                          <Users className="h-3 w-3" />
-                          {poll._count.participants} voto{poll._count.participants !== 1 ? 's' : ''}
-                        </Badge>
-                        <Badge variant="outline">
-                          {poll._count.options} opción{poll._count.options !== 1 ? 'es' : ''}
-                        </Badge>
-                      </div>
-                      <h3 className="font-semibold text-gray-900 truncate">{poll.title}</h3>
-                      {poll.description && (
-                        <p className="text-sm text-gray-400 truncate mt-0.5">{poll.description}</p>
-                      )}
-                      <p className="text-xs text-gray-400 mt-1">
-                        {new Date(poll.createdAt).toLocaleDateString('es-ES', {
-                          day: 'numeric', month: 'short', year: 'numeric'
-                        })}
-                      </p>
+                <CardContent className="p-4 space-y-3">
+                  {/* Info */}
+                  <div>
+                    <div className="flex flex-wrap items-center gap-2 mb-1.5">
+                      <Badge variant={poll.isClosed ? 'destructive' : 'success'}>
+                        {poll.isClosed ? (
+                          <><Lock className="h-3 w-3 mr-1" />Cerrada</>
+                        ) : (
+                          <><LockOpen className="h-3 w-3 mr-1" />Abierta</>
+                        )}
+                      </Badge>
+                      <Badge variant="secondary" className="flex items-center gap-1">
+                        <Users className="h-3 w-3" />
+                        {poll._count.participants} voto{poll._count.participants !== 1 ? 's' : ''}
+                      </Badge>
+                      <Badge variant="outline">
+                        {poll._count.options} opción{poll._count.options !== 1 ? 'es' : ''}
+                      </Badge>
                     </div>
-                    <div className="flex flex-col gap-2 shrink-0">
-                      <Link href={`/p/${poll.publicId}`} target="_blank">
-                        <Button variant="outline" size="sm" className="w-full">
-                          <ExternalLink className="h-3.5 w-3.5" />
-                          {tab === 'voted' ? 'Ver y votar' : 'Ver'}
+                    <h3 className="font-semibold text-gray-900">{poll.title}</h3>
+                    {poll.description && (
+                      <p className="text-sm text-gray-400 truncate mt-0.5">{poll.description}</p>
+                    )}
+                    <p className="text-xs text-gray-400 mt-1">
+                      {new Date(poll.createdAt).toLocaleDateString('es-ES', {
+                        day: 'numeric', month: 'short', year: 'numeric'
+                      })}
+                    </p>
+                  </div>
+                  {/* Buttons — always visible, full width on mobile */}
+                  <div className={tab === 'created' && poll.adminToken ? 'grid grid-cols-2 gap-2' : ''}>
+                    <Link href={`/p/${poll.publicId}`} target="_blank">
+                      <Button variant="outline" size="sm" className="w-full">
+                        <ExternalLink className="h-3.5 w-3.5" />
+                        {tab === 'voted' ? 'Ver y votar' : 'Ver encuesta'}
+                      </Button>
+                    </Link>
+                    {tab === 'created' && poll.adminToken && (
+                      <Link href={`/admin/${poll.publicId}?token=${poll.adminToken}`}>
+                        <Button size="sm" className="w-full">
+                          <Lock className="h-3.5 w-3.5" />
+                          Administrar
                         </Button>
                       </Link>
-                      {tab === 'created' && poll.adminToken && (
-                        <Link href={`/admin/${poll.publicId}?token=${poll.adminToken}`}>
-                          <Button size="sm" className="w-full">
-                            <Lock className="h-3.5 w-3.5" />
-                            Admin
-                          </Button>
-                        </Link>
-                      )}
-                    </div>
+                    )}
                   </div>
                 </CardContent>
               </Card>
