@@ -8,6 +8,7 @@ import {
   Plus,
   AlertTriangle,
   Loader2,
+  Download,
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -36,6 +37,48 @@ export function AdminPanel({ data, adminToken, counts, onUpdate }: AdminPanelPro
   const shareUrl = getShareUrl(data.publicId)
   const best = getBestOption(counts)
   const bestOption = data.options.find((o) => o.id === best?.optionId)
+
+  const handleExportCSV = () => {
+    const { options, participants, votes } = data
+
+    // Header row: Participante + each option label
+    const headers = ['Participante', ...options.map((o) => o.label)]
+
+    // One row per participant
+    const rows = participants.map((p) => {
+      const cells = options.map((o) => {
+        const vote = votes.find((v) => v.participantId === p.id && v.optionId === o.id)
+        if (!vote) return '-'
+        if (vote.value === 'YES') return 'Sí'
+        if (vote.value === 'NO') return 'No'
+        return 'Quizás'
+      })
+      return [p.name, ...cells]
+    })
+
+    // Summary row
+    const summary = options.map((o) => {
+      const c = counts.find((c) => c.optionId === o.id)
+      if (!c) return '-'
+      return `Sí:${c.yes} Quizás:${c.maybe} No:${c.no}`
+    })
+    rows.push(['RESUMEN', ...summary])
+
+    // Build CSV string
+    const escape = (val: string) => `"${val.replace(/"/g, '""')}"`
+    const csv = [headers, ...rows]
+      .map((row) => row.map(escape).join(','))
+      .join('\n')
+
+    // Download
+    const blob = new Blob(['﻿' + csv], { type: 'text/csv;charset=utf-8;' })
+    const url = URL.createObjectURL(blob)
+    const a = document.createElement('a')
+    a.href = url
+    a.download = `${data.title.replace(/[^a-z0-9]/gi, '_')}_votacion.csv`
+    a.click()
+    URL.revokeObjectURL(url)
+  }
 
   const handleToggleClose = async () => {
     setIsClosing(true)
@@ -208,6 +251,16 @@ export function AdminPanel({ data, adminToken, counts, onUpdate }: AdminPanelPro
               {actionError}
             </p>
           )}
+
+          <Button
+            variant="outline"
+            className="w-full"
+            onClick={handleExportCSV}
+            disabled={data.participants.length === 0}
+          >
+            <Download className="h-4 w-4" />
+            Exportar a Excel / CSV
+          </Button>
 
           <Button
             variant={data.isClosed ? 'success' : 'secondary'}
