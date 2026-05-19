@@ -2,6 +2,7 @@ import Link from 'next/link'
 import { ArrowRight, CheckCircle2, Link2, Users, Zap, Calendar, Shield } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
+import { AuthButton } from '@/components/AuthButton'
 
 const features = [
   {
@@ -66,9 +67,12 @@ export default function HomePage() {
           <span className="font-bold text-xl bg-gradient-to-r from-indigo-600 to-purple-600 bg-clip-text text-transparent">
             VotaFácil
           </span>
-          <Link href="/create">
-            <Button size="sm">Crear votación</Button>
-          </Link>
+          <div className="flex items-center gap-2">
+            <AuthButton />
+            <Link href="/create">
+              <Button size="sm">Crear votación</Button>
+            </Link>
+          </div>
         </div>
       </header>
 

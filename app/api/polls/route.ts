@@ -1,4 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { getServerSession } from 'next-auth'
+import { authOptions } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
 import { generatePublicId, generateAdminToken } from '@/lib/utils'
 import { createPollSchema } from '@/lib/validations'
@@ -19,6 +21,10 @@ export async function POST(request: NextRequest) {
     const publicId = generatePublicId()
     const adminToken = generateAdminToken()
 
+    // Get logged-in user email if available
+    const session = await getServerSession(authOptions)
+    const creatorEmail = session?.user?.email ?? null
+
     const poll = await prisma.poll.create({
       data: {
         publicId,
@@ -27,6 +33,7 @@ export async function POST(request: NextRequest) {
         description,
         type,
         creatorName,
+        creatorEmail,
         options: {
           create: options.map((o, idx) => ({
             label: o.label,

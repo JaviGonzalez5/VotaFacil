@@ -14,8 +14,9 @@ model Poll {
   title       String
   description String?
   type        String   @default("SIMPLE") // SIMPLE | DATES
-  creatorName String?
-  isClosed    Boolean  @default(false)
+  creatorName  String?
+  creatorEmail String?
+  isClosed     Boolean  @default(false)
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 

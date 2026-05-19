@@ -3,6 +3,7 @@ import { Inter } from 'next/font/google'
 import './globals.css'
 import { Toaster } from 'sonner'
 import { ServiceWorkerRegistration } from '@/components/ServiceWorkerRegistration'
+import { SessionProvider } from '@/components/SessionProvider'
 
 const inter = Inter({ subsets: ['latin'] })
 
@@ -19,7 +20,6 @@ export const metadata: Metadata = {
     statusBarStyle: 'default',
     title: 'VotaFácil',
   },
-  keywords: ['votaciones', 'doodle', 'encuestas', 'pádel', 'grupos', 'horarios'],
 }
 
 export const viewport: Viewport = {
@@ -29,15 +29,13 @@ export const viewport: Viewport = {
   maximumScale: 1,
 }
 
-export default function RootLayout({
-  children,
-}: {
-  children: React.ReactNode
-}) {
+export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="es">
       <body className={inter.className}>
-        {children}
+        <SessionProvider>
+          {children}
+        </SessionProvider>
         <Toaster richColors position="top-center" />
         <ServiceWorkerRegistration />
       </body>
