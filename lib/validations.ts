@@ -15,7 +15,7 @@ export const createPollSchema = z.object({
         dateTime: z.string().optional(),
       })
     )
-    .min(2, 'Necesitas al menos 2 opciones')
+    .min(1, 'Necesitas al menos 1 opción')
     .max(20, 'Máximo 20 opciones'),
 })
 

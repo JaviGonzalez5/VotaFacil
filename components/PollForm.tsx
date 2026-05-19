@@ -29,7 +29,6 @@ export function PollForm() {
   const [creatorName, setCreatorName] = useState('')
   const [options, setOptions] = useState<OptionRow[]>([
     { id: crypto.randomUUID(), label: '', dateTime: '' },
-    { id: crypto.randomUUID(), label: '', dateTime: '' },
   ])
 
   const addOption = () => {
@@ -38,7 +37,7 @@ export function PollForm() {
   }
 
   const removeOption = (id: string) => {
-    if (options.length <= 2) return
+    if (options.length <= 1) return
     setOptions((prev) => prev.filter((o) => o.id !== id))
   }
 
