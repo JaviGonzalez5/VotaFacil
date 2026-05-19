@@ -40,37 +40,39 @@ export function AdminPanel({ data, adminToken, counts, onUpdate }: AdminPanelPro
 
   const handleExportCSV = () => {
     const { options, participants, votes } = data
+    const SEP = ';'
+    const esc = (v: string) => `"${v.replace(/"/g, '""')}"`
 
-    // Header row: Participante + each option label
-    const headers = ['Participante', ...options.map((o) => o.label)]
+    const allRows: string[][] = []
+
+    // Title
+    allRows.push([data.title])
+    allRows.push([`Exportado el ${new Date().toLocaleDateString('es-ES')}`])
+    allRows.push([]) // blank line
+
+    // Header
+    allRows.push(['Participante', ...options.map((o) => o.label)])
 
     // One row per participant
-    const rows = participants.map((p) => {
+    participants.forEach((p) => {
       const cells = options.map((o) => {
         const vote = votes.find((v) => v.participantId === p.id && v.optionId === o.id)
         if (!vote) return '-'
-        if (vote.value === 'YES') return 'Sí'
+        if (vote.value === 'YES') return 'Si'
         if (vote.value === 'NO') return 'No'
-        return 'Quizás'
+        return 'Quizas'
       })
-      return [p.name, ...cells]
+      allRows.push([p.name, ...cells])
     })
 
-    // Summary row
-    const summary = options.map((o) => {
-      const c = counts.find((c) => c.optionId === o.id)
-      if (!c) return '-'
-      return `Sí:${c.yes} Quizás:${c.maybe} No:${c.no}`
-    })
-    rows.push(['RESUMEN', ...summary])
+    // Blank + summary rows
+    allRows.push([])
+    allRows.push(['Total Si',    ...options.map((o) => String(counts.find((c) => c.optionId === o.id)?.yes    ?? 0))])
+    allRows.push(['Total Quizas',...options.map((o) => String(counts.find((c) => c.optionId === o.id)?.maybe  ?? 0))])
+    allRows.push(['Total No',    ...options.map((o) => String(counts.find((c) => c.optionId === o.id)?.no     ?? 0))])
 
-    // Build CSV string — semicolon separator for Spanish Excel
-    const escape = (val: string) => `"${val.replace(/"/g, '""')}"`
-    const csv = ['sep=;', [headers, ...rows]
-      .map((row) => row.map(escape).join(';'))
-      .join('\n')].join('\n')
+    const csv = 'sep=;\n' + allRows.map((r) => r.map(esc).join(SEP)).join('\r\n')
 
-    // Download
     const blob = new Blob(['﻿' + csv], { type: 'text/csv;charset=utf-8;' })
     const url = URL.createObjectURL(blob)
     const a = document.createElement('a')
