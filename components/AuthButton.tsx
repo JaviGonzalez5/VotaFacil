@@ -21,31 +21,29 @@ export function AuthButton() {
     return (
       <div className="flex items-center gap-2">
         <Link href="/dashboard">
-          <Button variant="outline" size="sm" className="hidden sm:flex">
-            <LayoutDashboard className="h-4 w-4" />
-            Mis votaciones
+          <Button variant="outline" size="sm" className="flex items-center gap-2">
+            {session.user.image ? (
+              <Image
+                src={session.user.image}
+                alt={session.user.name ?? 'User'}
+                width={20}
+                height={20}
+                className="rounded-full"
+              />
+            ) : (
+              <LayoutDashboard className="h-4 w-4" />
+            )}
+            <span>Mis votaciones</span>
           </Button>
         </Link>
-        <div className="flex items-center gap-2">
-          {session.user.image && (
-            <Image
-              src={session.user.image}
-              alt={session.user.name ?? 'User'}
-              width={32}
-              height={32}
-              className="rounded-full border-2 border-gray-200"
-            />
-          )}
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={() => signOut()}
-            className="text-gray-500 hover:text-red-600"
-          >
-            <LogOut className="h-4 w-4" />
-            <span className="hidden sm:inline">Salir</span>
-          </Button>
-        </div>
+        <Button
+          variant="ghost"
+          size="sm"
+          onClick={() => signOut()}
+          className="text-gray-500 hover:text-red-600 px-2"
+        >
+          <LogOut className="h-4 w-4" />
+        </Button>
       </div>
     )
   }
@@ -58,7 +56,7 @@ export function AuthButton() {
       className="flex items-center gap-2"
     >
       <LogIn className="h-4 w-4" />
-      Entrar con Google
+      <span>Entrar con Google</span>
     </Button>
   )
 }

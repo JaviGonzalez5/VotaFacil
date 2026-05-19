@@ -69,7 +69,7 @@ export default function HomePage() {
           </span>
           <div className="flex items-center gap-2">
             <AuthButton />
-            <Link href="/create">
+            <Link href="/create" className="hidden sm:block">
               <Button size="sm">Crear votación</Button>
             </Link>
           </div>
@@ -93,19 +93,10 @@ export default function HomePage() {
             Crea una votación en 30 segundos, comparte el enlace y recoge las respuestas de todo el grupo. Sin cuentas, sin complicaciones.
           </p>
           <div className="flex flex-col sm:flex-row gap-3 justify-center pt-2">
-            <Link href="/create">
-              <Button size="lg" className="bg-white text-indigo-700 hover:bg-gray-100 font-semibold shadow-lg w-full sm:w-auto">
+            <Link href="/create" className="w-full sm:w-auto">
+              <Button size="lg" className="bg-white text-indigo-700 hover:bg-gray-100 font-semibold shadow-lg w-full">
                 Crear votación gratis
                 <ArrowRight className="h-5 w-5" />
-              </Button>
-            </Link>
-            <Link href="/create">
-              <Button
-                size="lg"
-                variant="outline"
-                className="border-white/50 text-white hover:bg-white/10 w-full sm:w-auto"
-              >
-                Ver cómo funciona
               </Button>
             </Link>
           </div>
