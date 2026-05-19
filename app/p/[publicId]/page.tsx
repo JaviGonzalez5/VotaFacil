@@ -147,7 +147,7 @@ export default function PublicPollPage({
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
           {/* Vote form */}
-          <div className="lg:col-span-1 order-2 lg:order-1">
+          <div className="lg:col-span-1 order-1 lg:order-1">
             {data.isClosed ? (
               <Card>
                 <CardContent className="pt-6 text-center py-10 space-y-2">
@@ -174,7 +174,7 @@ export default function PublicPollPage({
           </div>
 
           {/* Results table */}
-          <div className="lg:col-span-2 order-1 lg:order-2 space-y-3">
+          <div className="lg:col-span-2 order-2 lg:order-2 space-y-3">
             <div className="flex items-center justify-between">
               <h2 className="font-semibold text-gray-900">Resultados</h2>
               <button

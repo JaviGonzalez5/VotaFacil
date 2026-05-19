@@ -161,7 +161,7 @@ export function VoteForm({ data, onVoteSubmitted }: VoteFormProps) {
         {options.map((option) => (
           <div key={option.id} className="rounded-lg border border-gray-200 p-3 space-y-2">
             <p className="text-sm font-medium text-gray-800">{option.label}</p>
-            <div className="flex gap-2">
+            <div className="grid grid-cols-3 gap-2">
               {voteOptions.map(({ value, label, icon: Icon, colors }) => (
                 <button
                   key={value}
@@ -169,11 +169,11 @@ export function VoteForm({ data, onVoteSubmitted }: VoteFormProps) {
                   data-selected={selections[option.id] === value}
                   onClick={() => setVote(option.id, value)}
                   className={cn(
-                    'flex-1 flex flex-col items-center gap-1 rounded-lg border py-2 px-1 text-xs font-medium transition-all',
+                    'flex flex-col items-center gap-1 rounded-lg border py-2.5 px-1 text-xs font-medium transition-all',
                     colors
                   )}
                 >
-                  <Icon className="h-4 w-4" />
+                  <Icon className="h-5 w-5" />
                   {label}
                 </button>
               ))}
