@@ -12,16 +12,19 @@ import {
   ArrowLeft,
   LayoutDashboard,
   Loader2,
+  PenLine,
+  Vote,
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { AuthButton } from '@/components/AuthButton'
+import { cn } from '@/lib/utils'
 
 interface PollSummary {
   id: string
   publicId: string
-  adminToken: string
+  adminToken?: string
   title: string
   description: string | null
   type: string
@@ -30,16 +33,26 @@ interface PollSummary {
   _count: { participants: number; options: number }
 }
 
+type Tab = 'created' | 'voted'
+
 export default function DashboardPage() {
   const { data: session, status } = useSession()
-  const [polls, setPolls] = useState<PollSummary[]>([])
+  const [created, setCreated] = useState<PollSummary[]>([])
+  const [voted, setVoted] = useState<PollSummary[]>([])
   const [loading, setLoading] = useState(true)
+  const [tab, setTab] = useState<Tab>('created')
 
   useEffect(() => {
     if (status === 'authenticated') {
-      fetch('/api/polls/mine')
-        .then((r) => r.json())
-        .then((data) => { setPolls(data); setLoading(false) })
+      Promise.all([
+        fetch('/api/polls/mine').then((r) => r.json()),
+        fetch('/api/polls/voted').then((r) => r.json()),
+      ])
+        .then(([mine, votedData]) => {
+          setCreated(Array.isArray(mine) ? mine : [])
+          setVoted(Array.isArray(votedData) ? votedData : [])
+          setLoading(false)
+        })
         .catch(() => setLoading(false))
     } else if (status === 'unauthenticated') {
       setLoading(false)
@@ -78,6 +91,8 @@ export default function DashboardPage() {
     )
   }
 
+  const polls = tab === 'created' ? created : voted
+
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Header */}
@@ -100,7 +115,7 @@ export default function DashboardPage() {
           <div>
             <h1 className="text-2xl font-bold text-gray-900">Mis votaciones</h1>
             <p className="text-sm text-gray-500 mt-0.5">
-              Hola, {session.user?.name?.split(' ')[0]} — tienes {polls.length} votación{polls.length !== 1 ? 'es' : ''}
+              Hola, {session.user?.name?.split(' ')[0]}
             </p>
           </div>
           <Link href="/create">
@@ -111,20 +126,71 @@ export default function DashboardPage() {
           </Link>
         </div>
 
+        {/* Tabs */}
+        <div className="flex gap-1 bg-gray-100 rounded-xl p-1 w-fit">
+          <button
+            onClick={() => setTab('created')}
+            className={cn(
+              'flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all',
+              tab === 'created'
+                ? 'bg-white text-indigo-700 shadow-sm'
+                : 'text-gray-500 hover:text-gray-700'
+            )}
+          >
+            <PenLine className="h-4 w-4" />
+            Creadas
+            <span className={cn(
+              'text-xs rounded-full px-2 py-0.5',
+              tab === 'created' ? 'bg-indigo-100 text-indigo-600' : 'bg-gray-200 text-gray-500'
+            )}>
+              {created.length}
+            </span>
+          </button>
+          <button
+            onClick={() => setTab('voted')}
+            className={cn(
+              'flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all',
+              tab === 'voted'
+                ? 'bg-white text-indigo-700 shadow-sm'
+                : 'text-gray-500 hover:text-gray-700'
+            )}
+          >
+            <Vote className="h-4 w-4" />
+            Votadas
+            <span className={cn(
+              'text-xs rounded-full px-2 py-0.5',
+              tab === 'voted' ? 'bg-indigo-100 text-indigo-600' : 'bg-gray-200 text-gray-500'
+            )}>
+              {voted.length}
+            </span>
+          </button>
+        </div>
+
         {polls.length === 0 ? (
           <Card>
             <CardContent className="py-16 text-center space-y-3">
-              <div className="text-5xl">🗳️</div>
-              <p className="font-medium text-gray-700">Aún no has creado ninguna votación</p>
-              <p className="text-sm text-gray-400">
-                Las próximas votaciones que crees con tu cuenta aparecerán aquí.
-              </p>
-              <Link href="/create">
-                <Button className="mt-2">
-                  <Plus className="h-4 w-4" />
-                  Crear primera votación
-                </Button>
-              </Link>
+              <div className="text-5xl">{tab === 'created' ? '🗳️' : '🗓️'}</div>
+              {tab === 'created' ? (
+                <>
+                  <p className="font-medium text-gray-700">Aún no has creado ninguna votación</p>
+                  <p className="text-sm text-gray-400">
+                    Las próximas votaciones que crees con tu cuenta aparecerán aquí.
+                  </p>
+                  <Link href="/create">
+                    <Button className="mt-2">
+                      <Plus className="h-4 w-4" />
+                      Crear primera votación
+                    </Button>
+                  </Link>
+                </>
+              ) : (
+                <>
+                  <p className="font-medium text-gray-700">Aún no has votado en ninguna encuesta</p>
+                  <p className="text-sm text-gray-400">
+                    Cuando votes en una encuesta estando logueado, aparecerá aquí.
+                  </p>
+                </>
+              )}
             </CardContent>
           </Card>
         ) : (
@@ -164,15 +230,17 @@ export default function DashboardPage() {
                       <Link href={`/p/${poll.publicId}`} target="_blank">
                         <Button variant="outline" size="sm" className="w-full">
                           <ExternalLink className="h-3.5 w-3.5" />
-                          Ver
+                          {tab === 'voted' ? 'Ver y votar' : 'Ver'}
                         </Button>
                       </Link>
-                      <Link href={`/admin/${poll.publicId}?token=${poll.adminToken}`}>
-                        <Button size="sm" className="w-full">
-                          <Lock className="h-3.5 w-3.5" />
-                          Admin
-                        </Button>
-                      </Link>
+                      {tab === 'created' && poll.adminToken && (
+                        <Link href={`/admin/${poll.publicId}?token=${poll.adminToken}`}>
+                          <Button size="sm" className="w-full">
+                            <Lock className="h-3.5 w-3.5" />
+                            Admin
+                          </Button>
+                        </Link>
+                      )}
                     </div>
                   </div>
                 </CardContent>

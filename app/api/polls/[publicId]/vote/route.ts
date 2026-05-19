@@ -1,4 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { getServerSession } from 'next-auth'
+import { authOptions } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
 import { submitVoteSchema } from '@/lib/validations'
 
@@ -37,13 +39,17 @@ export async function POST(request: NextRequest, { params }: Params) {
       return NextResponse.json({ error: 'Opción inválida' }, { status: 400 })
     }
 
+    // Get logged-in user email if available
+    const session = await getServerSession(authOptions)
+    const voterEmail = session?.user?.email ?? null
+
     // Upsert participant
     const participant = await prisma.participant.upsert({
       where: {
         pollId_name: { pollId: poll.id, name },
       },
-      create: { pollId: poll.id, name },
-      update: {},
+      create: { pollId: poll.id, name, email: voterEmail },
+      update: { email: voterEmail ?? undefined },
     })
 
     // Upsert votes
