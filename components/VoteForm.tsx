@@ -63,7 +63,7 @@ export function VoteForm({ data, onVoteSubmitted }: VoteFormProps) {
     setSelections((prev) => ({ ...prev, [optionId]: value }))
   }
 
-  const allVoted = options.every((o) => selections[o.id])
+  const votedCount = options.filter((o) => selections[o.id]).length
 
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault()
@@ -73,10 +73,15 @@ export function VoteForm({ data, onVoteSubmitted }: VoteFormProps) {
       setError('Escribe tu nombre para votar')
       return
     }
-    if (!allVoted) {
-      setError('Vota todas las opciones antes de guardar')
+    if (votedCount === 0) {
+      setError('Vota al menos una opción antes de guardar')
       return
     }
+
+    // Only send votes for options that have a selection
+    const selectedVotes = options
+      .filter((o) => selections[o.id])
+      .map((o) => ({ optionId: o.id, value: selections[o.id] }))
 
     setIsLoading(true)
     try {
@@ -85,10 +90,7 @@ export function VoteForm({ data, onVoteSubmitted }: VoteFormProps) {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           name: name.trim(),
-          votes: options.map((o) => ({
-            optionId: o.id,
-            value: selections[o.id],
-          })),
+          votes: selectedVotes,
         }),
       })
 
@@ -155,7 +157,7 @@ export function VoteForm({ data, onVoteSubmitted }: VoteFormProps) {
 
       {/* Vote per option */}
       <div className="space-y-3">
-        <Label>Vota cada opción *</Label>
+        <Label>Vota las opciones que quieras <span className="text-gray-400 font-normal">(al menos 1)</span></Label>
         {options.map((option) => (
           <div key={option.id} className="rounded-lg border border-gray-200 p-3 space-y-2">
             <p className="text-sm font-medium text-gray-800">{option.label}</p>
@@ -189,7 +191,7 @@ export function VoteForm({ data, onVoteSubmitted }: VoteFormProps) {
       <Button
         type="submit"
         className="w-full"
-        disabled={isLoading || !name.trim()}
+        disabled={isLoading || !name.trim() || votedCount === 0}
       >
         {isLoading ? (
           <>
@@ -199,7 +201,7 @@ export function VoteForm({ data, onVoteSubmitted }: VoteFormProps) {
         ) : (
           <>
             <Send className="h-4 w-4" />
-            Guardar voto
+            {votedCount > 0 ? `Guardar voto (${votedCount} opción${votedCount !== 1 ? 'es' : ''})` : 'Guardar voto'}
           </>
         )}
       </Button>
