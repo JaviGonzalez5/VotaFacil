@@ -50,8 +50,8 @@ export function PollForm() {
     setError(null)
 
     const filledOptions = options.filter((o) => o.label.trim() !== '')
-    if (filledOptions.length < 2) {
-      setError('Necesitas al menos 2 opciones')
+    if (filledOptions.length < 1) {
+      setError('Necesitas al menos 1 opción')
       return
     }
 
