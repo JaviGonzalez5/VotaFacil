@@ -38,48 +38,12 @@ export function AdminPanel({ data, adminToken, counts, onUpdate }: AdminPanelPro
   const best = getBestOption(counts)
   const bestOption = data.options.find((o) => o.id === best?.optionId)
 
-  const handleExportCSV = () => {
-    const { options, participants, votes } = data
-    const SEP = ';'
-    const esc = (v: string) => `"${v.replace(/"/g, '""')}"`
-
-    const allRows: string[][] = []
-
-    // Title
-    allRows.push([data.title])
-    allRows.push([`Exportado el ${new Date().toLocaleDateString('es-ES')}`])
-    allRows.push([]) // blank line
-
-    // Header
-    allRows.push(['Participante', ...options.map((o) => o.label)])
-
-    // One row per participant
-    participants.forEach((p) => {
-      const cells = options.map((o) => {
-        const vote = votes.find((v) => v.participantId === p.id && v.optionId === o.id)
-        if (!vote) return '-'
-        if (vote.value === 'YES') return 'Si'
-        if (vote.value === 'NO') return 'No'
-        return 'Quizas'
-      })
-      allRows.push([p.name, ...cells])
-    })
-
-    // Blank + summary rows
-    allRows.push([])
-    allRows.push(['Total Si',    ...options.map((o) => String(counts.find((c) => c.optionId === o.id)?.yes    ?? 0))])
-    allRows.push(['Total Quizas',...options.map((o) => String(counts.find((c) => c.optionId === o.id)?.maybe  ?? 0))])
-    allRows.push(['Total No',    ...options.map((o) => String(counts.find((c) => c.optionId === o.id)?.no     ?? 0))])
-
-    const csv = 'sep=;\n' + allRows.map((r) => r.map(esc).join(SEP)).join('\r\n')
-
-    const blob = new Blob(['﻿' + csv], { type: 'text/csv;charset=utf-8;' })
-    const url = URL.createObjectURL(blob)
+  const handleExportExcel = () => {
+    const url = `/api/polls/${data.publicId}/export?token=${adminToken}`
     const a = document.createElement('a')
     a.href = url
-    a.download = `${data.title.replace(/[^a-z0-9]/gi, '_')}_votacion.csv`
+    a.download = `${data.title.replace(/[^a-z0-9]/gi, '_')}_votacion.xlsx`
     a.click()
-    URL.revokeObjectURL(url)
   }
 
   const handleToggleClose = async () => {
@@ -257,11 +221,11 @@ export function AdminPanel({ data, adminToken, counts, onUpdate }: AdminPanelPro
           <Button
             variant="outline"
             className="w-full"
-            onClick={handleExportCSV}
+            onClick={handleExportExcel}
             disabled={data.participants.length === 0}
           >
             <Download className="h-4 w-4" />
-            Exportar a Excel / CSV
+            Exportar a Excel (.xlsx)
           </Button>
 
           <Button
