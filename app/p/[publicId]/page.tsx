@@ -16,6 +16,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 import { VoteTable } from '@/components/VoteTable'
 import { VoteForm } from '@/components/VoteForm'
 import { CopyButton } from '@/components/CopyButton'
+import { AuthButton } from '@/components/AuthButton'
 import { computeVoteCounts, getBestOption, getShareUrl } from '@/lib/utils'
 import type { PollWithData } from '@/types'
 
@@ -101,7 +102,10 @@ export default function PublicPollPage({
           <span className="font-bold text-lg bg-gradient-to-r from-indigo-600 to-purple-600 bg-clip-text text-transparent">
             VotaFácil
           </span>
-          <CopyButton text={shareUrl} label="Compartir" size="sm" />
+          <div className="flex items-center gap-2">
+            <AuthButton />
+            <CopyButton text={shareUrl} label="Compartir" size="sm" />
+          </div>
         </div>
       </header>
 
