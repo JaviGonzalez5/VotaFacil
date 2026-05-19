@@ -64,11 +64,11 @@ export function AdminPanel({ data, adminToken, counts, onUpdate }: AdminPanelPro
     })
     rows.push(['RESUMEN', ...summary])
 
-    // Build CSV string
+    // Build CSV string — semicolon separator for Spanish Excel
     const escape = (val: string) => `"${val.replace(/"/g, '""')}"`
-    const csv = [headers, ...rows]
-      .map((row) => row.map(escape).join(','))
-      .join('\n')
+    const csv = ['sep=;', [headers, ...rows]
+      .map((row) => row.map(escape).join(';'))
+      .join('\n')].join('\n')
 
     // Download
     const blob = new Blob(['﻿' + csv], { type: 'text/csv;charset=utf-8;' })
