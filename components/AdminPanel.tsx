@@ -40,9 +40,10 @@ export function AdminPanel({ data, adminToken, counts, onUpdate }: AdminPanelPro
 
   const handleExportExcel = () => {
     const url = `/api/polls/${data.publicId}/export?token=${adminToken}`
+    const cleanTitle = data.title.replace(/[^a-z0-9]/gi, '_').replace(/^_+|_+$/g, '')
     const a = document.createElement('a')
     a.href = url
-    a.download = `${data.title.replace(/[^a-z0-9]/gi, '_')}_votacion.xlsx`
+    a.download = `${cleanTitle || 'votacion'}_votacion.xlsx`
     a.click()
   }
 
@@ -154,7 +155,7 @@ export function AdminPanel({ data, adminToken, counts, onUpdate }: AdminPanelPro
       {counts.length > 0 && (
         <Card>
           <CardHeader className="pb-3">
-            <CardTitle className="text-base">Ranking de opciones</CardTitle>
+            <CardTitle className="text-base">Resultados</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="space-y-2">
@@ -192,8 +193,14 @@ export function AdminPanel({ data, adminToken, counts, onUpdate }: AdminPanelPro
                 placeholder="Nueva opción…"
                 maxLength={200}
                 className="flex-1"
+                aria-label="Texto de la nueva opción"
               />
-              <Button type="submit" size="sm" disabled={isAddingOption || !newOption.trim()}>
+              <Button
+                type="submit"
+                size="sm"
+                disabled={isAddingOption || !newOption.trim()}
+                aria-label="Añadir opción"
+              >
                 {isAddingOption ? <Loader2 className="h-4 w-4 animate-spin" /> : <Plus className="h-4 w-4" />}
               </Button>
             </form>
@@ -255,7 +262,9 @@ export function AdminPanel({ data, adminToken, counts, onUpdate }: AdminPanelPro
             <div className="rounded-lg border border-red-200 bg-red-50 p-3 space-y-2">
               <p className="text-sm text-red-700 flex items-center gap-2">
                 <AlertTriangle className="h-4 w-4 shrink-0" />
-                Esta acción no se puede deshacer. ¿Seguro?
+                Se eliminará la votación{data.participants.length > 0
+                  ? ` y sus ${data.participants.length} voto${data.participants.length !== 1 ? 's' : ''}`
+                  : ''}. No se puede deshacer. ¿Seguro?
               </p>
               <div className="flex gap-2">
                 <Button

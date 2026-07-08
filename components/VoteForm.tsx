@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, type FormEvent } from 'react'
+import { useState, useEffect, useRef, type FormEvent } from 'react'
 import { CheckCircle2, Loader2, Send } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -21,15 +21,17 @@ export function VoteForm({ data, onVoteSubmitted }: VoteFormProps) {
   const [error, setError] = useState<string | null>(null)
   const [success, setSuccess] = useState(false)
 
-  // Pre-fill vote if participant already voted
+  // Pre-fill vote if participant already voted — only when the typed name
+  // changes, not on every background refresh (would clobber an in-progress edit)
+  const prefilledForName = useRef<string | null>(null)
   useEffect(() => {
-    if (!name.trim()) return
-    const existing = participants.find(
-      (p) => p.name.toLowerCase() === name.trim().toLowerCase()
-    )
+    const trimmed = name.trim().toLowerCase()
+    if (!trimmed || trimmed === prefilledForName.current) return
+    const existing = participants.find((p) => p.name.toLowerCase() === trimmed)
     if (existing) {
       const existingVote = votes.find((v) => v.participantId === existing.id)
       setSelectedOptionId(existingVote?.optionId ?? null)
+      prefilledForName.current = trimmed
     }
   }, [name, participants, votes])
 
@@ -112,7 +114,7 @@ export function VoteForm({ data, onVoteSubmitted }: VoteFormProps) {
           required
         />
         {existingParticipant && (
-          <p className="text-xs text-indigo-600">
+          <p className="text-xs text-indigo-600" aria-live="polite">
             Actualizando tu voto anterior.
           </p>
         )}

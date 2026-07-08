@@ -22,7 +22,7 @@ const features = [
   {
     icon: Users,
     title: 'Vota en grupo',
-    description: 'Cada persona escribe su nombre y vota. Sí, No o Quizás.',
+    description: 'Cada persona escribe su nombre y elige su opción favorita.',
     color: 'text-green-500',
     bg: 'bg-green-50',
   },

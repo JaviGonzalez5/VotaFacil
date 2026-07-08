@@ -60,6 +60,22 @@ export default function PublicPollPage({
     fetchPoll()
   }, [fetchPoll])
 
+  // Keep results fresh: poll periodically and re-sync when the tab regains focus
+  useEffect(() => {
+    const interval = setInterval(() => fetchPoll(true), 20000)
+    const onFocus = () => fetchPoll(true)
+    const onVisibilityChange = () => {
+      if (document.visibilityState === 'visible') fetchPoll(true)
+    }
+    window.addEventListener('focus', onFocus)
+    document.addEventListener('visibilitychange', onVisibilityChange)
+    return () => {
+      clearInterval(interval)
+      window.removeEventListener('focus', onFocus)
+      document.removeEventListener('visibilitychange', onVisibilityChange)
+    }
+  }, [fetchPoll])
+
   if (loading) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
@@ -163,7 +179,7 @@ export default function PublicPollPage({
                 <CardHeader className="pb-3">
                   <CardTitle className="text-base">Tu voto</CardTitle>
                   <CardDescription>
-                    Escribe tu nombre y vota cada opción.
+                    Escribe tu nombre y elige tu opción favorita.
                   </CardDescription>
                 </CardHeader>
                 <CardContent>

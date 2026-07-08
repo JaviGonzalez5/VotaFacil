@@ -1,5 +1,4 @@
-import type { ElementType } from 'react'
-import { CheckCircle2, XCircle, HelpCircle, Users, X as XIcon } from 'lucide-react'
+import { Users, X as XIcon } from 'lucide-react'
 import { Badge } from '@/components/ui/badge'
 import { cn } from '@/lib/utils'
 import type { PollWithData, VoteValue, VoteCounts } from '@/types'
@@ -8,69 +7,10 @@ interface VoteTableProps {
   data: PollWithData
   counts: VoteCounts[]
   bestOptionId?: string | null
-  /** Admin mode: click a cell to cycle its value, and remove participants */
+  /** Admin mode: reassign a participant's vote to another option, or remove them */
   isAdmin?: boolean
   onVoteChange?: (participantId: string, optionId: string, value: VoteValue | null) => void
   onDeleteParticipant?: (participantId: string) => void
-}
-
-const VOTE_CYCLE: (VoteValue | null)[] = ['YES', null]
-
-function nextVoteValue(current: VoteValue | undefined): VoteValue | null {
-  const idx = current ? VOTE_CYCLE.indexOf(current) : -1
-  return VOTE_CYCLE[(idx + 1) % VOTE_CYCLE.length]
-}
-
-const voteConfig: Record<VoteValue, { icon: ElementType; label: string; cell: string; badge: string }> = {
-  YES: {
-    icon: CheckCircle2,
-    label: 'Sí',
-    cell: 'bg-green-50 text-green-700',
-    badge: 'bg-green-100 text-green-800',
-  },
-  NO: {
-    icon: XCircle,
-    label: 'No',
-    cell: 'bg-red-50 text-red-700',
-    badge: 'bg-red-100 text-red-800',
-  },
-  MAYBE: {
-    icon: HelpCircle,
-    label: 'Quizás',
-    cell: 'bg-yellow-50 text-yellow-700',
-    badge: 'bg-yellow-100 text-yellow-800',
-  },
-}
-
-function VoteCell({
-  value,
-  onClick,
-}: {
-  value: VoteValue | undefined
-  onClick?: () => void
-}) {
-  if (!value) {
-    return (
-      <td
-        className={cn('px-2 py-3 text-center w-16', onClick && 'cursor-pointer hover:bg-gray-100')}
-        onClick={onClick}
-        title={onClick ? 'Clic para cambiar' : undefined}
-      >
-        <span className="text-gray-200 text-lg">—</span>
-      </td>
-    )
-  }
-  const config = voteConfig[value]
-  const Icon = config.icon
-  return (
-    <td
-      className={cn('px-2 py-3 text-center w-16', config.cell, onClick && 'cursor-pointer hover:brightness-95')}
-      onClick={onClick}
-      title={onClick ? 'Clic para cambiar' : undefined}
-    >
-      <Icon className="h-5 w-5 mx-auto" strokeWidth={2.5} />
-    </td>
-  )
 }
 
 export function VoteTable({
@@ -92,119 +32,94 @@ export function VoteTable({
     )
   }
 
-  const getVote = (participantId: string, optionId: string): VoteValue | undefined => {
-    const vote = votes.find(
-      (v) => v.participantId === participantId && v.optionId === optionId
-    )
-    return vote?.value as VoteValue | undefined
-  }
+  const getChosenOptionId = (participantId: string): string | undefined =>
+    votes.find((v) => v.participantId === participantId)?.optionId
 
-  const countForOption = (optionId: string) =>
-    counts.find((c) => c.optionId === optionId)
+  const totalVotes = participants.length
 
   return (
-    <div className="rounded-xl border border-gray-200 overflow-hidden">
-      <div className="overflow-x-auto">
-        <table className="text-sm border-collapse" style={{ minWidth: '100%' }}>
-          <thead>
-            <tr className="bg-gray-50 border-b border-gray-200">
-              <th className="sticky left-0 bg-gray-50 px-3 py-3 text-left font-semibold text-gray-700 z-10 min-w-[90px] max-w-[130px]">
-                Nombre
-              </th>
-              {options.map((option) => (
-                <th
-                  key={option.id}
-                  className={cn(
-                    'px-2 py-3 text-center font-medium text-gray-700 w-16',
-                    bestOptionId === option.id && 'bg-indigo-50'
-                  )}
-                >
-                  <div className="flex flex-col items-center gap-1">
-                    <span className="text-xs leading-tight line-clamp-2 max-w-[80px]">{option.label}</span>
-                    {bestOptionId === option.id && (
-                      <Badge className="text-[10px] px-1 py-0">⭐</Badge>
-                    )}
-                  </div>
-                </th>
-              ))}
-              {isAdmin && <th className="w-10" />}
-            </tr>
-          </thead>
-          <tbody>
-            {participants.map((participant, idx) => (
-              <tr
-                key={participant.id}
-                className={cn(
-                  'border-b border-gray-100 transition-colors hover:bg-gray-50',
-                  idx % 2 === 0 ? 'bg-white' : 'bg-gray-50/40'
-                )}
-              >
-                <td className="sticky left-0 bg-inherit px-3 py-3 font-medium text-gray-900 z-10 max-w-[130px] truncate">
-                  {participant.name}
-                </td>
-                {options.map((option) => (
-                  <VoteCell
-                    key={option.id}
-                    value={getVote(participant.id, option.id)}
-                    onClick={
-                      isAdmin
-                        ? () =>
-                            onVoteChange?.(
-                              participant.id,
-                              option.id,
-                              nextVoteValue(getVote(participant.id, option.id))
-                            )
-                        : undefined
-                    }
-                  />
-                ))}
-                {isAdmin && (
-                  <td className="px-2 py-3 text-center w-10">
+    <div className="space-y-3">
+      {options.map((option) => {
+        const count = counts.find((c) => c.optionId === option.id)
+        const total = count?.total ?? 0
+        const pct = totalVotes > 0 ? Math.round((total / totalVotes) * 100) : 0
+        const voters = participants.filter((p) => getChosenOptionId(p.id) === option.id)
+        const isBest = bestOptionId === option.id
+
+        return (
+          <div
+            key={option.id}
+            className={cn(
+              'rounded-xl border p-4',
+              isBest ? 'border-indigo-200 bg-indigo-50/40' : 'border-gray-200'
+            )}
+          >
+            <div className="flex items-center justify-between gap-2 mb-2">
+              <div className="flex items-center gap-1.5 min-w-0">
+                <span className="font-medium text-gray-900 truncate">{option.label}</span>
+                {isBest && total > 0 && <Badge className="shrink-0 text-[10px] px-1 py-0">⭐</Badge>}
+              </div>
+              <span className="text-sm text-gray-500 shrink-0">
+                {total} voto{total !== 1 ? 's' : ''} · {pct}%
+              </span>
+            </div>
+
+            <div className="h-2 rounded-full bg-gray-100 overflow-hidden mb-3">
+              <div
+                className={cn('h-full rounded-full', isBest ? 'bg-indigo-500' : 'bg-indigo-300')}
+                style={{ width: `${pct}%` }}
+              />
+            </div>
+
+            {voters.length === 0 ? (
+              <p className="text-xs text-gray-300">Nadie ha votado esta opción todavía.</p>
+            ) : isAdmin ? (
+              <div className="space-y-1.5">
+                {voters.map((p) => (
+                  <div
+                    key={p.id}
+                    className="flex items-center gap-2 rounded-lg border border-gray-100 bg-white px-2.5 py-1.5 text-sm"
+                  >
+                    <span className="flex-1 min-w-0 truncate text-gray-800">{p.name}</span>
+                    <select
+                      value={option.id}
+                      onChange={(e) => onVoteChange?.(p.id, e.target.value, 'YES')}
+                      className="text-xs border border-gray-200 rounded-md px-1.5 py-1 bg-white text-gray-600 max-w-[40%]"
+                      aria-label={`Cambiar opción votada por ${p.name}`}
+                    >
+                      {options.map((o) => (
+                        <option key={o.id} value={o.id}>
+                          {o.label}
+                        </option>
+                      ))}
+                    </select>
                     <button
                       type="button"
-                      onClick={() => onDeleteParticipant?.(participant.id)}
-                      className="text-gray-300 hover:text-red-600 transition-colors"
-                      title={`Eliminar a ${participant.name}`}
+                      onClick={() => onDeleteParticipant?.(p.id)}
+                      className="text-gray-300 hover:text-red-600 transition-colors shrink-0"
+                      title={`Eliminar a ${p.name}`}
+                      aria-label={`Eliminar a ${p.name}`}
                     >
                       <XIcon className="h-4 w-4" />
                     </button>
-                  </td>
-                )}
-              </tr>
-            ))}
-          </tbody>
-          <tfoot>
-            <tr className="bg-gray-50 border-t-2 border-gray-200">
-              <td className="sticky left-0 bg-gray-50 px-3 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wide z-10">
-                Total
-              </td>
-              {options.map((option) => {
-                const c = countForOption(option.id)
-                return (
-                  <td key={option.id} className={cn('px-2 py-3', bestOptionId === option.id && 'bg-indigo-50/60')}>
-                    <div className="flex flex-col items-center gap-0.5 text-xs">
-                      {c && (
-                        <>
-                          <span className="font-semibold text-green-700 flex items-center gap-0.5">
-                            <CheckCircle2 className="h-3 w-3" />{c.yes}
-                          </span>
-                          <span className="text-yellow-700 flex items-center gap-0.5">
-                            <HelpCircle className="h-3 w-3" />{c.maybe}
-                          </span>
-                          <span className="text-red-700 flex items-center gap-0.5">
-                            <XCircle className="h-3 w-3" />{c.no}
-                          </span>
-                        </>
-                      )}
-                    </div>
-                  </td>
-                )
-              })}
-              {isAdmin && <td className="w-10" />}
-            </tr>
-          </tfoot>
-        </table>
-      </div>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <div className="flex flex-wrap gap-1.5">
+                {voters.map((p) => (
+                  <span
+                    key={p.id}
+                    className="inline-flex items-center rounded-full bg-gray-100 px-2.5 py-1 text-xs text-gray-700"
+                  >
+                    {p.name}
+                  </span>
+                ))}
+              </div>
+            )}
+          </div>
+        )
+      })}
     </div>
   )
 }

@@ -61,7 +61,9 @@ function SuccessContent() {
               <span className="text-sm font-semibold text-amber-700">Tu enlace de administración</span>
             </div>
             <p className="text-xs text-amber-700 bg-amber-100 rounded-lg px-3 py-2">
-              ⚠️ Guarda este enlace. Es el único modo de gestionar la votación. No lo compartas con otros.
+              ⚠️ Guarda este enlace ahora. Es el único modo de gestionar la votación y no hay forma de
+              recuperarlo después — si cierras esta página sin copiarlo, perderás el acceso de administrador
+              para siempre. No lo compartas con otros.
             </p>
             <div className="flex items-center gap-2 bg-white rounded-lg border border-amber-200 px-3 py-2">
               <span className="flex-1 truncate text-xs text-gray-600 font-mono">{adminUrl}</span>

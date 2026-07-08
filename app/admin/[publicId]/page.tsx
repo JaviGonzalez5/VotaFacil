@@ -3,6 +3,7 @@
 import { useState, useEffect, useCallback, Suspense } from 'react'
 import Link from 'next/link'
 import { useSearchParams } from 'next/navigation'
+import { toast } from 'sonner'
 import {
   ArrowLeft,
   Settings,
@@ -124,9 +125,11 @@ function AdminContent({ publicId }: { publicId: string }) {
       })
       if (!res.ok) throw new Error()
       setVoteActionError(null)
+      toast.success('Voto actualizado')
       fetchPoll(true)
     } catch {
       setVoteActionError('No se pudo actualizar el voto.')
+      toast.error('No se pudo actualizar el voto.')
     }
   }
 
@@ -140,9 +143,11 @@ function AdminContent({ publicId }: { publicId: string }) {
       })
       if (!res.ok) throw new Error()
       setVoteActionError(null)
+      toast.success('Participante eliminado')
       fetchPoll(true)
     } catch {
       setVoteActionError('No se pudo eliminar el participante.')
+      toast.error('No se pudo eliminar el participante.')
     }
   }
 
@@ -205,7 +210,7 @@ function AdminContent({ publicId }: { publicId: string }) {
             <p className="text-sm text-red-600 bg-red-50 rounded-lg px-3 py-2">{voteActionError}</p>
           )}
           <p className="text-xs text-gray-400">
-            Clic en una celda para cambiar un voto, o en la ✕ para eliminar a un participante.
+            Usa el desplegable para mover el voto de alguien a otra opción, o la ✕ para eliminarlo.
           </p>
           <VoteTable
             data={data}
