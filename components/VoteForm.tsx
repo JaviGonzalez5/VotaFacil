@@ -1,43 +1,22 @@
 'use client'
 
-import { useState, useEffect, type ElementType, type FormEvent } from 'react'
-import { CheckCircle2, XCircle, HelpCircle, Loader2, Send } from 'lucide-react'
+import { useState, useEffect, type FormEvent } from 'react'
+import { CheckCircle2, Loader2, Send } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { cn } from '@/lib/utils'
-import type { VoteValue, PollWithData } from '@/types'
+import type { PollWithData } from '@/types'
 
 interface VoteFormProps {
   data: PollWithData
   onVoteSubmitted: () => void
 }
 
-const voteOptions: { value: VoteValue; label: string; icon: ElementType; colors: string }[] = [
-  {
-    value: 'YES',
-    label: 'Sí',
-    icon: CheckCircle2,
-    colors: 'border-green-300 bg-green-50 text-green-700 hover:bg-green-100 data-[selected=true]:border-green-500 data-[selected=true]:bg-green-100 data-[selected=true]:ring-1 data-[selected=true]:ring-green-500',
-  },
-  {
-    value: 'MAYBE',
-    label: 'Quizás',
-    icon: HelpCircle,
-    colors: 'border-yellow-300 bg-yellow-50 text-yellow-700 hover:bg-yellow-100 data-[selected=true]:border-yellow-500 data-[selected=true]:bg-yellow-100 data-[selected=true]:ring-1 data-[selected=true]:ring-yellow-500',
-  },
-  {
-    value: 'NO',
-    label: 'No',
-    icon: XCircle,
-    colors: 'border-red-300 bg-red-50 text-red-700 hover:bg-red-100 data-[selected=true]:border-red-500 data-[selected=true]:bg-red-100 data-[selected=true]:ring-1 data-[selected=true]:ring-red-500',
-  },
-]
-
 export function VoteForm({ data, onVoteSubmitted }: VoteFormProps) {
   const { options, participants, votes } = data
   const [name, setName] = useState('')
-  const [selections, setSelections] = useState<Record<string, VoteValue>>({})
+  const [selectedOptionId, setSelectedOptionId] = useState<string | null>(null)
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [success, setSuccess] = useState(false)
@@ -49,21 +28,10 @@ export function VoteForm({ data, onVoteSubmitted }: VoteFormProps) {
       (p) => p.name.toLowerCase() === name.trim().toLowerCase()
     )
     if (existing) {
-      const existingVotes: Record<string, VoteValue> = {}
-      votes
-        .filter((v) => v.participantId === existing.id)
-        .forEach((v) => {
-          existingVotes[v.optionId] = v.value as VoteValue
-        })
-      setSelections(existingVotes)
+      const existingVote = votes.find((v) => v.participantId === existing.id)
+      setSelectedOptionId(existingVote?.optionId ?? null)
     }
   }, [name, participants, votes])
-
-  const setVote = (optionId: string, value: VoteValue) => {
-    setSelections((prev) => ({ ...prev, [optionId]: value }))
-  }
-
-  const votedCount = options.filter((o) => selections[o.id]).length
 
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault()
@@ -73,15 +41,10 @@ export function VoteForm({ data, onVoteSubmitted }: VoteFormProps) {
       setError('Escribe tu nombre para votar')
       return
     }
-    if (votedCount === 0) {
-      setError('Vota al menos una opción antes de guardar')
+    if (!selectedOptionId) {
+      setError('Elige una opción antes de guardar')
       return
     }
-
-    // Only send votes for options that have a selection
-    const selectedVotes = options
-      .filter((o) => selections[o.id])
-      .map((o) => ({ optionId: o.id, value: selections[o.id] }))
 
     setIsLoading(true)
     try {
@@ -90,7 +53,7 @@ export function VoteForm({ data, onVoteSubmitted }: VoteFormProps) {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           name: name.trim(),
-          votes: selectedVotes,
+          votes: [{ optionId: selectedOptionId, value: 'YES' }],
         }),
       })
 
@@ -121,7 +84,7 @@ export function VoteForm({ data, onVoteSubmitted }: VoteFormProps) {
           size="sm"
           onClick={() => {
             setSuccess(false)
-            setSelections({})
+            setSelectedOptionId(null)
             setName('')
           }}
         >
@@ -155,31 +118,37 @@ export function VoteForm({ data, onVoteSubmitted }: VoteFormProps) {
         )}
       </div>
 
-      {/* Vote per option */}
-      <div className="space-y-3">
-        <Label>Vota las opciones que quieras <span className="text-gray-400 font-normal">(al menos 1)</span></Label>
-        {options.map((option) => (
-          <div key={option.id} className="rounded-lg border border-gray-200 p-3 space-y-2">
-            <p className="text-sm font-medium text-gray-800">{option.label}</p>
-            <div className="grid grid-cols-3 gap-2">
-              {voteOptions.map(({ value, label, icon: Icon, colors }) => (
-                <button
-                  key={value}
-                  type="button"
-                  data-selected={selections[option.id] === value}
-                  onClick={() => setVote(option.id, value)}
+      {/* Single choice among options */}
+      <div className="space-y-2">
+        <Label>Elige tu opción favorita</Label>
+        <div className="space-y-2">
+          {options.map((option) => {
+            const selected = selectedOptionId === option.id
+            return (
+              <button
+                key={option.id}
+                type="button"
+                data-selected={selected}
+                onClick={() => setSelectedOptionId(option.id)}
+                className={cn(
+                  'w-full flex items-center gap-3 rounded-lg border py-3 px-4 text-left text-sm font-medium transition-all',
+                  'border-gray-200 bg-white text-gray-700 hover:bg-gray-50',
+                  'data-[selected=true]:border-indigo-500 data-[selected=true]:bg-indigo-50 data-[selected=true]:text-indigo-700 data-[selected=true]:ring-1 data-[selected=true]:ring-indigo-500'
+                )}
+              >
+                <span
                   className={cn(
-                    'flex flex-col items-center gap-1 rounded-lg border py-2.5 px-1 text-xs font-medium transition-all',
-                    colors
+                    'flex h-5 w-5 shrink-0 items-center justify-center rounded-full border-2 transition-colors',
+                    selected ? 'border-indigo-500' : 'border-gray-300'
                   )}
                 >
-                  <Icon className="h-5 w-5" />
-                  {label}
-                </button>
-              ))}
-            </div>
-          </div>
-        ))}
+                  {selected && <span className="h-2.5 w-2.5 rounded-full bg-indigo-500" />}
+                </span>
+                {option.label}
+              </button>
+            )
+          })}
+        </div>
       </div>
 
       {error && (
@@ -188,11 +157,7 @@ export function VoteForm({ data, onVoteSubmitted }: VoteFormProps) {
         </p>
       )}
 
-      <Button
-        type="submit"
-        className="w-full"
-        disabled={isLoading || !name.trim() || votedCount === 0}
-      >
+      <Button type="submit" className="w-full" disabled={isLoading || !name.trim() || !selectedOptionId}>
         {isLoading ? (
           <>
             <Loader2 className="h-4 w-4 animate-spin" />
@@ -201,7 +166,7 @@ export function VoteForm({ data, onVoteSubmitted }: VoteFormProps) {
         ) : (
           <>
             <Send className="h-4 w-4" />
-            {votedCount > 0 ? `Guardar voto (${votedCount} opción${votedCount !== 1 ? 'es' : ''})` : 'Guardar voto'}
+            Guardar voto
           </>
         )}
       </Button>

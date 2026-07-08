@@ -40,6 +40,13 @@ export const addOptionSchema = z.object({
   dateTime: z.string().optional(),
 })
 
+export const adminUpdateVoteSchema = z.object({
+  participantId: z.string().cuid(),
+  optionId: z.string().cuid(),
+  value: z.enum(['YES', 'NO', 'MAYBE']).nullable(),
+})
+
 export type CreatePollInput = z.infer<typeof createPollSchema>
 export type SubmitVoteInput = z.infer<typeof submitVoteSchema>
 export type AddOptionInput = z.infer<typeof addOptionSchema>
+export type AdminUpdateVoteInput = z.infer<typeof adminUpdateVoteSchema>

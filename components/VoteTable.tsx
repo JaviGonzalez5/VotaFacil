@@ -1,5 +1,5 @@
 import type { ElementType } from 'react'
-import { CheckCircle2, XCircle, HelpCircle, Users } from 'lucide-react'
+import { CheckCircle2, XCircle, HelpCircle, Users, X as XIcon } from 'lucide-react'
 import { Badge } from '@/components/ui/badge'
 import { cn } from '@/lib/utils'
 import type { PollWithData, VoteValue, VoteCounts } from '@/types'
@@ -8,6 +8,17 @@ interface VoteTableProps {
   data: PollWithData
   counts: VoteCounts[]
   bestOptionId?: string | null
+  /** Admin mode: click a cell to cycle its value, and remove participants */
+  isAdmin?: boolean
+  onVoteChange?: (participantId: string, optionId: string, value: VoteValue | null) => void
+  onDeleteParticipant?: (participantId: string) => void
+}
+
+const VOTE_CYCLE: (VoteValue | null)[] = ['YES', null]
+
+function nextVoteValue(current: VoteValue | undefined): VoteValue | null {
+  const idx = current ? VOTE_CYCLE.indexOf(current) : -1
+  return VOTE_CYCLE[(idx + 1) % VOTE_CYCLE.length]
 }
 
 const voteConfig: Record<VoteValue, { icon: ElementType; label: string; cell: string; badge: string }> = {
@@ -31,10 +42,20 @@ const voteConfig: Record<VoteValue, { icon: ElementType; label: string; cell: st
   },
 }
 
-function VoteCell({ value }: { value: VoteValue | undefined }) {
+function VoteCell({
+  value,
+  onClick,
+}: {
+  value: VoteValue | undefined
+  onClick?: () => void
+}) {
   if (!value) {
     return (
-      <td className="px-2 py-3 text-center w-16">
+      <td
+        className={cn('px-2 py-3 text-center w-16', onClick && 'cursor-pointer hover:bg-gray-100')}
+        onClick={onClick}
+        title={onClick ? 'Clic para cambiar' : undefined}
+      >
         <span className="text-gray-200 text-lg">—</span>
       </td>
     )
@@ -42,13 +63,24 @@ function VoteCell({ value }: { value: VoteValue | undefined }) {
   const config = voteConfig[value]
   const Icon = config.icon
   return (
-    <td className={cn('px-2 py-3 text-center w-16', config.cell)}>
+    <td
+      className={cn('px-2 py-3 text-center w-16', config.cell, onClick && 'cursor-pointer hover:brightness-95')}
+      onClick={onClick}
+      title={onClick ? 'Clic para cambiar' : undefined}
+    >
       <Icon className="h-5 w-5 mx-auto" strokeWidth={2.5} />
     </td>
   )
 }
 
-export function VoteTable({ data, counts, bestOptionId }: VoteTableProps) {
+export function VoteTable({
+  data,
+  counts,
+  bestOptionId,
+  isAdmin,
+  onVoteChange,
+  onDeleteParticipant,
+}: VoteTableProps) {
   const { options, participants, votes } = data
 
   if (participants.length === 0) {
@@ -95,6 +127,7 @@ export function VoteTable({ data, counts, bestOptionId }: VoteTableProps) {
                   </div>
                 </th>
               ))}
+              {isAdmin && <th className="w-10" />}
             </tr>
           </thead>
           <tbody>
@@ -113,8 +146,30 @@ export function VoteTable({ data, counts, bestOptionId }: VoteTableProps) {
                   <VoteCell
                     key={option.id}
                     value={getVote(participant.id, option.id)}
+                    onClick={
+                      isAdmin
+                        ? () =>
+                            onVoteChange?.(
+                              participant.id,
+                              option.id,
+                              nextVoteValue(getVote(participant.id, option.id))
+                            )
+                        : undefined
+                    }
                   />
                 ))}
+                {isAdmin && (
+                  <td className="px-2 py-3 text-center w-10">
+                    <button
+                      type="button"
+                      onClick={() => onDeleteParticipant?.(participant.id)}
+                      className="text-gray-300 hover:text-red-600 transition-colors"
+                      title={`Eliminar a ${participant.name}`}
+                    >
+                      <XIcon className="h-4 w-4" />
+                    </button>
+                  </td>
+                )}
               </tr>
             ))}
           </tbody>
@@ -145,6 +200,7 @@ export function VoteTable({ data, counts, bestOptionId }: VoteTableProps) {
                   </td>
                 )
               })}
+              {isAdmin && <td className="w-10" />}
             </tr>
           </tfoot>
         </table>

@@ -144,7 +144,7 @@ export function AdminPanel({ data, adminToken, counts, onUpdate }: AdminPanelPro
             </p>
             <p className="font-semibold text-gray-900">{bestOption.label}</p>
             <p className="text-sm text-gray-600 mt-1">
-              {best?.yes} Sí · {best?.maybe} Quizás · {best?.no} No
+              {best?.yes} voto{best?.yes !== 1 ? 's' : ''}
             </p>
           </CardContent>
         </Card>
@@ -169,9 +169,7 @@ export function AdminPanel({ data, adminToken, counts, onUpdate }: AdminPanelPro
                         {idx + 1}
                       </span>
                       <span className="flex-1 text-gray-800">{opt.label}</span>
-                      <span className="text-green-600 font-semibold">✓{c.yes}</span>
-                      <span className="text-yellow-600">?{c.maybe}</span>
-                      <span className="text-red-500">✗{c.no}</span>
+                      <span className="text-green-600 font-semibold">✓ {c.yes}</span>
                     </div>
                   )
                 })}

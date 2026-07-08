@@ -16,7 +16,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { VoteTable } from '@/components/VoteTable'
 import { AdminPanel } from '@/components/AdminPanel'
 import { computeVoteCounts } from '@/lib/utils'
-import type { PollWithData } from '@/types'
+import type { PollWithData, VoteValue } from '@/types'
 
 function AdminContent({ publicId }: { publicId: string }) {
   const searchParams = useSearchParams()
@@ -27,6 +27,7 @@ function AdminContent({ publicId }: { publicId: string }) {
   const [error, setError] = useState<string | null>(null)
   const [refreshing, setRefreshing] = useState(false)
   const [authError, setAuthError] = useState(false)
+  const [voteActionError, setVoteActionError] = useState<string | null>(null)
 
   const fetchPoll = useCallback(
     async (silent = false) => {
@@ -107,6 +108,44 @@ function AdminContent({ publicId }: { publicId: string }) {
 
   const counts = computeVoteCounts(data)
 
+  const handleVoteChange = async (
+    participantId: string,
+    optionId: string,
+    value: VoteValue | null
+  ) => {
+    try {
+      const res = await fetch(`/api/polls/${publicId}/vote`, {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({ participantId, optionId, value }),
+      })
+      if (!res.ok) throw new Error()
+      setVoteActionError(null)
+      fetchPoll(true)
+    } catch {
+      setVoteActionError('No se pudo actualizar el voto.')
+    }
+  }
+
+  const handleDeleteParticipant = async (participantId: string) => {
+    const participant = data.participants.find((p) => p.id === participantId)
+    if (!confirm(`¿Eliminar a "${participant?.name ?? 'este participante'}" y todos sus votos?`)) return
+    try {
+      const res = await fetch(`/api/polls/${publicId}/participants/${participantId}`, {
+        method: 'DELETE',
+        headers: { Authorization: `Bearer ${token}` },
+      })
+      if (!res.ok) throw new Error()
+      setVoteActionError(null)
+      fetchPoll(true)
+    } catch {
+      setVoteActionError('No se pudo eliminar el participante.')
+    }
+  }
+
   return (
     <main className="max-w-5xl mx-auto px-4 py-6 space-y-5">
       {/* Poll header */}
@@ -162,7 +201,19 @@ function AdminContent({ publicId }: { publicId: string }) {
               Actualizar
             </button>
           </div>
-          <VoteTable data={data} counts={counts} />
+          {voteActionError && (
+            <p className="text-sm text-red-600 bg-red-50 rounded-lg px-3 py-2">{voteActionError}</p>
+          )}
+          <p className="text-xs text-gray-400">
+            Clic en una celda para cambiar un voto, o en la ✕ para eliminar a un participante.
+          </p>
+          <VoteTable
+            data={data}
+            counts={counts}
+            isAdmin
+            onVoteChange={handleVoteChange}
+            onDeleteParticipant={handleDeleteParticipant}
+          />
         </div>
       </div>
     </main>
