@@ -5,6 +5,7 @@ import { Toaster } from 'sonner'
 import { ServiceWorkerRegistration } from '@/components/ServiceWorkerRegistration'
 import { SessionProvider } from '@/components/SessionProvider'
 import { Analytics } from '@vercel/analytics/next'
+import { SpeedInsights } from '@vercel/speed-insights/next'
 
 const inter = Inter({ subsets: ['latin'] })
 
@@ -39,6 +40,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <Toaster richColors position="top-center" />
         <ServiceWorkerRegistration />
         <Analytics />
+        <SpeedInsights />
       </body>
     </html>
   )
